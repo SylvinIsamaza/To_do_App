@@ -1,28 +1,21 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 
-function TodoApp() {
+const TodoApp = () => {
   const [tasks, setTasks] = useState([]);
   const [newTask, setNewTask] = useState('');
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [sortBy, setSortBy] = useState('all');
 
   const addTask = () => {
     if (newTask.trim() !== '') {
-      setTasks([...tasks, { id: Date.now(), name: newTask, completed: false }]);
+      const task = { id: Date.now(), name: newTask, completed: false };
+      setTasks([...tasks, task]);
       setNewTask('');
     }
   };
 
   const deleteTask = (taskId) => {
     const updatedTasks = tasks.filter((task) => task.id !== taskId);
-    setTasks(updatedTasks);
-  };
-
-  const editTask = (taskId, newName) => {
-    const updatedTasks = tasks.map((task) => {
-      if (task.id === taskId) {
-        return { ...task, name: newName };
-      }
-      return task;
-    });
     setTasks(updatedTasks);
   };
 
@@ -36,11 +29,65 @@ function TodoApp() {
     setTasks(updatedTasks);
   };
 
+  const updateTask = (taskId, newName) => {
+    const updatedTasks = tasks.map((task) => {
+      if (task.id === taskId) {
+        return { ...task, name: newName };
+      }
+      return task;
+    });
+    setTasks(updatedTasks);
+    setSelectedTask(null);
+    setNewTask(newName); 
+  };
+  
+
+  const sortTasks = () => {
+    let sortedTasks = tasks;
+    if (sortBy === 'completed') {
+      sortedTasks = tasks.filter((task) => task.completed);
+    } else if (sortBy === 'incomplete') {
+      sortedTasks = tasks.filter((task) => !task.completed);
+    }
+    return (
+      <ul>
+        {sortedTasks.map((task) => (
+          <li key={task.id}>
+            <ul>
+              <li>{task.name}</li>
+              <li>
+                <button onClick={() => toggleComplete(task.id)}>
+                  {task.completed ? 'Mark Incomplete' : 'Mark Complete'}
+                </button>
+                <button onClick={() => setSelectedTask(task)}>Edit</button>
+                <button onClick={() => deleteTask(task.id)}>Delete</button>
+              </li>
+            </ul>
+          </li>
+        ))}
+      </ul>
+    );
+    ;
+  };
+
+  const handleSortChange = (e) => {
+    setSortBy(e.target.value);
+  };
+
   return (
     <div>
       <h1>To-Do App</h1>
-    
-      <div>
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (selectedTask) {
+            updateTask(selectedTask.id, newTask);
+          } else {
+            addTask();
+          }
+        }}
+      >
         <input
           type="text"
           value={newTask}
@@ -48,41 +95,23 @@ function TodoApp() {
           placeholder="Enter a new task"
           id='text'
         />
-        <button onClick={addTask}>Add Task</button>
-        <ul>
-        <li>completion</li>
-        <li>name</li>
-        <li className='action'>action</li>
-      </ul>
-      </div>
-      
-        {tasks.map((task) => (
-          <ul>
-          <li key={task.id}>
-            <input
-              type="checkbox"
-              checked={task.completed}
-              onChange={() => toggleComplete(task.id)}
-            />
-            </li>
-            <li>
-            {task.completed ? <s>{task.name}</s> : task.name}
-            </li>
-            <div className='action'><li>
-            <button onClick={() => deleteTask(task.id)}>d</button>
+        <button type="submit">{selectedTask ? 'Update Task' : 'Add Task'}</button>
+        {selectedTask && (
+          <button type="button" onClick={() => setSelectedTask(null)}>
+            Cancel
+          </button>
+        )}
+      </form>
 
-            </li>
-           <li>  <button onClick={() => editTask(task.id, prompt('Enter a new name', task.name))}>
-              
-            </button></li></div>
-            
-          
-          
-          </ul>
-        ))}
-      
+      <select value={sortBy} onChange={handleSortChange}>
+        <option value="all">All Tasks</option>
+        <option value="completed">Completed Tasks</option>
+        <option value="incomplete">Incomplete Tasks</option>
+      </select>
+
+      {sortTasks()}
     </div>
   );
-}
+};
 
 export default TodoApp;
